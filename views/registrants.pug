@@ -1,0 +1,21 @@
+html
+head
+title Registrants
+
+link(rel="stylesheet" href="/css/registrants.css")
+
+body
+  h1 Registrants
+
+  table
+    thead
+      th Name
+      th Sport
+    tbody
+      each registrant in registrants
+        tr
+          td= registrant.name
+          td= registrant.sport
+
+
+  a(href="/" class="button") Home

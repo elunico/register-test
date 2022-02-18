@@ -1,0 +1,26 @@
+html
+head
+title Register for a Sport
+
+link(rel="stylesheet" href="/css/index.css")
+
+body
+  h1 Register for Sport
+
+  form(action="/register" method="post")
+    <!-- <input type="hidden" name="_token" value="{{ csrf_token() }}"> -->
+    label(for="name") Name:
+    input(type="text" name="name" placeholder="Name")
+    label(for="email") Email:
+    input(type="text" name="email" placeholder="Email")
+    label(for="sport") Sport of choice:
+    select(name="sport")
+      each sport in sports
+        option(value="#{sport}")= sport
+
+    input(type="submit" value="Register")
+  p
+    a(href="/registrants")View Registrants
+
+
+  a(href="/" class="button") Home
