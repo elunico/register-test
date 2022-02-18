@@ -10,11 +10,13 @@ body
   table
     thead
       th Name
+      th Email
       th Sport
     tbody
       each registrant in registrants
         tr
           td= registrant.name
+          td(class="email")= registrant.email
           td= registrant.sport
 
 

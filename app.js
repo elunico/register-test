@@ -3,6 +3,7 @@ const app = express();
 const sqlite3 = require('sqlite3').verbose();
 const pug = require('pug');
 
+app.use((req, res, next) => console.log(`${req.method} ${req.url}`) || next());
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
@@ -21,11 +22,12 @@ let db = new sqlite3.Database('./db/database.db', sqlite3.OPEN_READWRITE | sqlit
 });
 
 app.get('/', (req, res) => {
-  return res.render('index.pug', { sports: sports });
+  res.render('index.pug', { sports: sports });
 });
 
 app.post('/register', (req, res) => {
   const { name, email, sport } = req.body;
+  console.log(sport);
 
   if (!name) {
     res.render('error.pug', { error: 'Missing field name.' });
@@ -90,14 +92,20 @@ app.get('/registrants', (req, res) => {
   });
 });
 
+let cleanedUp = false;
+
 function cleanup() {
-  db.close((err) => {
-    if (err) {
-      console.error(err.message);
-    } else {
-      console.log('Close the database connection.');
-    }
-    process.exit();
+  if (cleanedUp) return;
+  db.serialize(() => {
+    db.close((err) => {
+      if (err) {
+        console.error(err.message);
+      } else {
+        cleanedUp = true;
+        console.log('Close the database connection.');
+      }
+      process.exit();
+    });
   });
 }
 

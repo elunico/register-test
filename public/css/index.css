@@ -10,6 +10,8 @@ body {
 form {
   display: grid;
   grid-template-columns: 200px minmax(100px, 250px);
+  grid-row-gap: 0.5rem;
+  row-gap: 0.5rem;
 }
 
 input[type="submit"] {

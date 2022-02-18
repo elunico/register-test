@@ -9,6 +9,12 @@ body {
 
 table {
   border-collapse: collapse;
+  margin: 1rem;
+}
+
+.email {
+  font-family: Menlo, "DejaVu Sans Mono", "Bitstream Vera Sans Mono", monospace;
+  font-size: calc(1em - 2pt);
 }
 
 td {
