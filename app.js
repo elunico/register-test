@@ -104,19 +104,39 @@ app.get('/success', (req, res) => {
 });
 
 app.get('/registrants', (req, res) => {
-  const { sport } = req.query;
+  let { sport, name } = req.query;
+  name = "%" + name + "%";
 
-  const query = sport && sport !== 'All' ? `SELECT * FROM users WHERE sport = ?` : `SELECT * FROM users`;
-  const values = sport && sport !== 'All' ? [sport] : [];
+  let statement;
 
-  db.all(query, values, (err, rows) => {
+  if (name && sport) {
+    statement = db.prepare(`SELECT * FROM users WHERE name like ? AND sport like ?`);
+    statement.run('name');
+    statement.run('sport');
+  } else if (name) {
+    statement = db.prepare(`SELECT * FROM users WHERE name like ?`);
+    statement.run('name');
+  } else if (sport) {
+    statement = db.prepare(`SELECT * FROM users WHERE sport like ?`);
+    statement.run('sport');
+  } else {
+    statement = db.prepare(`SELECT * FROM users`);
+  }
+
+  let values = [];
+  if (name) values.push(name);
+  if (sport && sport !== 'All') values.push(sport);
+
+  statement.all(values, (err, rows) => {
     if (err) {
       console.error(err);
       res.render('error.pug', { error: error.message });
     } else {
       res.render('registrants.pug', { registrants: rows, sports: [...sports, 'All'] });
     }
+    statement.finalize();
   });
+
 });
 
 app.get('/api/registrants', (req, res) => {

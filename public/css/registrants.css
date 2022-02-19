@@ -7,6 +7,32 @@ body {
 
 }
 
+.search {
+  display: grid;
+  width: 75%;
+  max-width: 1000px;
+  min-width: max-content;
+  height: auto;
+  grid-template-columns: 4fr 3fr 0.5fr;
+  grid-gap: 1rem;
+}
+
+.search>input[type="text"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  grid-column: 2;
+}
+
+.search>select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  grid-column: 2;
+}
+
 table {
   border-collapse: collapse;
   margin: 1rem;
