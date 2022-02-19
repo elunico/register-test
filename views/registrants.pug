@@ -10,14 +10,16 @@ body
   div(class="search")
 
     span Enter a name to search
-    input(type="text" name="name" placeholder="Name", autocomplete="off", id="search-box")
+    div(class="name-box")
+      input(type="text" name="name" placeholder="Name", autocomplete="off", id="search-box")
     input(type="button" value="Search" id="search-button")
 
 
     span Choose a sport to view only registrants for that sport
-    select(id="sport-select")
-      each sport in sports
-        option(data-sport=sport)= sport
+    div(class="choice-box")
+      select(id="sport-select")
+        each sport in sports
+          option(data-sport=sport)= sport
 
   table
     thead

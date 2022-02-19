@@ -17,15 +17,15 @@ body {
   grid-gap: 1rem;
 }
 
-.search>input[type="text"] {
+.name-box>input[type="text"] {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.25rem;
   border: 1px solid #ccc;
   border-radius: 3px;
-  grid-column: 2;
 }
 
-.search>select {
+.search.choice-box,
+.search.name-box {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid #ccc;

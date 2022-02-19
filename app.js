@@ -22,6 +22,10 @@ const db = new sqlite3.Database('./db/database.db', sqlite3.OPEN_READWRITE | sql
   }
 });
 
+function fuzz(string) {
+  return `%${string}%`;
+}
+
 function cleanup() {
   if (cleanedUp) return;
   db.serialize(() => {
@@ -105,20 +109,23 @@ app.get('/success', (req, res) => {
 
 app.get('/registrants', (req, res) => {
   let { sport, name } = req.query;
-  name = "%" + name + "%";
+
+  if (name && /['"]/g.test(name)) {
+    name = name.replace(/["']/g, '');
+  } else if (name) {
+    name = fuzz(name)
+  }
+
+  console.log(name)
 
   let statement;
 
   if (name && sport) {
     statement = db.prepare(`SELECT * FROM users WHERE name like ? AND sport like ?`);
-    statement.run('name');
-    statement.run('sport');
   } else if (name) {
     statement = db.prepare(`SELECT * FROM users WHERE name like ?`);
-    statement.run('name');
   } else if (sport) {
     statement = db.prepare(`SELECT * FROM users WHERE sport like ?`);
-    statement.run('sport');
   } else {
     statement = db.prepare(`SELECT * FROM users`);
   }
@@ -130,7 +137,7 @@ app.get('/registrants', (req, res) => {
   statement.all(values, (err, rows) => {
     if (err) {
       console.error(err);
-      res.render('error.pug', { error: error.message });
+      res.render('error.pug', { error: err.message });
     } else {
       res.render('registrants.pug', { registrants: rows, sports: [...sports, 'All'] });
     }
