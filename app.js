@@ -3,6 +3,8 @@ const app = express();
 const sqlite3 = require('sqlite3').verbose();
 const pug = require('pug');
 
+const DB_FILE = process.env.DB_FILE || './db/database.db';
+
 let cleanedUp = false;
 
 const sports = [
@@ -15,16 +17,15 @@ const sports = [
   "Ultimate Frisbee",
 ];
 
-const db = new sqlite3.Database('./db/database.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+const db = new sqlite3.Database(DB_FILE, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
   if (err) {
     console.error(err);
     process.exit(1);
   }
 });
 
-function fuzz(string) {
-  return `%${string}%`;
-}
+// pure function
+const fuzz = (string) => `%${string}%`;
 
 function cleanup() {
   if (cleanedUp) return;
@@ -54,7 +55,6 @@ app.get('/', (req, res) => {
 
 app.post('/register', (req, res) => {
   const { name, email, sport } = req.body;
-  console.log(sport);
 
   if (!name) {
     res.render('error.pug', { error: 'Missing field name.' });
@@ -72,24 +72,20 @@ app.post('/register', (req, res) => {
   }
 
   db.serialize(() => {
-    console.log(email);
     db.get('SELECT email from users where email = ?', [email], (err, row) => {
       if (err) {
         console.error(err);
-        res.render('error.pug', { error: error.message });
+        res.render('error.pug', { error: err.message });
+      } else if (row) {
+        res.render('alreadyRegistered.pug', { ...row });
       } else {
-        console.log(row);
-        if (row) {
-          res.render('alreadyRegistered.pug', { ...row });
-        } else {
-          db.run(`INSERT INTO users (name, email, sport) VALUES (?, ?, ?)`, [name, email, sport], (err) => {
-            if (err) {
-              console.error(err);
-            } else {
-              res.redirect(`/success?name=${name}&email=${email}&sport=${sport}`);
-            }
-          });
-        }
+        db.run(`INSERT INTO users (name, email, sport) VALUES (?, ?, ?)`, [name, email, sport], (err) => {
+          if (err) {
+            console.error(err);
+          } else {
+            res.redirect(`/success?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&sport=${encodeURIComponent(sport)}`);
+          }
+        });
       }
     });
   });
@@ -108,18 +104,23 @@ app.get('/success', (req, res) => {
 });
 
 app.get('/registrants', (req, res) => {
+  // obtain query parameters from URL
   let { sport, name } = req.query;
 
+  // determine if the name should exact match or fuzzy match
   if (name && /['"]/g.test(name)) {
     name = name.replace(/["']/g, '');
   } else if (name) {
-    name = fuzz(name)
+    name = fuzz(name);
   }
 
-  console.log(name)
+  // create the array of values for the SQL statement
+  let values = [];
+  if (name) values.push(name);
+  if (sport && sport !== 'All') values.push(sport);
 
+  // build the statement based on URL query
   let statement;
-
   if (name && sport) {
     statement = db.prepare(`SELECT * FROM users WHERE name like ? AND sport like ?`);
   } else if (name) {
@@ -130,10 +131,7 @@ app.get('/registrants', (req, res) => {
     statement = db.prepare(`SELECT * FROM users`);
   }
 
-  let values = [];
-  if (name) values.push(name);
-  if (sport && sport !== 'All') values.push(sport);
-
+  // execute the statement
   statement.all(values, (err, rows) => {
     if (err) {
       console.error(err);
@@ -143,7 +141,6 @@ app.get('/registrants', (req, res) => {
     }
     statement.finalize();
   });
-
 });
 
 app.get('/api/registrants', (req, res) => {
