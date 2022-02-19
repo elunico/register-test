@@ -10,7 +10,7 @@ body
   form(action="/register" method="post")
     //- input(type="hidden" name="_token" value="{{ csrf_token() }}")
     label(for="name") Name:
-    input(type="text" name="name" placeholder="Name")
+    input(type="text" autocomplete="off" name="name" placeholder="Name")
     label(for="email") Email:
     input(type="text" name="email" placeholder="Email")
     label(for="sport") Sport of choice:

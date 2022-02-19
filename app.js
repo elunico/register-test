@@ -3,23 +3,46 @@ const app = express();
 const sqlite3 = require('sqlite3').verbose();
 const pug = require('pug');
 
-app.use((req, res, next) => console.log(`${req.method} ${req.url}`) || next());
-app.use(express.static('public'));
-app.use(express.urlencoded({ extended: true }));
+let cleanedUp = false;
 
 const sports = [
   "Football",
+  "Basketball",
   "Baseball",
   "Soccer",
+  "Golf",
+  "Tennis",
   "Ultimate Frisbee",
 ];
 
-let db = new sqlite3.Database('./db/database.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+const db = new sqlite3.Database('./db/database.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
   if (err) {
     console.error(err);
     process.exit(1);
   }
 });
+
+function cleanup() {
+  if (cleanedUp) return;
+  db.serialize(() => {
+    db.close((err) => {
+      if (err) {
+        console.error(err.message);
+      } else {
+        cleanedUp = true;
+        console.log('Close the database connection.');
+      }
+      process.exit();
+    });
+  });
+}
+
+process.on('exit', cleanup);
+process.on('SIGINT', cleanup);
+
+app.use((req, res, next) => console.log(`${req.method} ${req.url}`) || next());
+app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
   res.render('index.pug', { sports: sports });
@@ -49,7 +72,7 @@ app.post('/register', (req, res) => {
     db.get('SELECT email from users where email = ?', [email], (err, row) => {
       if (err) {
         console.error(err);
-        res.sendFile(__dirname + '/public/error.html');
+        res.render('error.pug', { error: error.message });
       } else {
         console.log(row);
         if (row) {
@@ -81,36 +104,31 @@ app.get('/success', (req, res) => {
 });
 
 app.get('/registrants', (req, res) => {
+  const { sport } = req.query;
 
-  db.all('SELECT * FROM users', (err, rows) => {
+  const query = sport && sport !== 'All' ? `SELECT * FROM users WHERE sport = ?` : `SELECT * FROM users`;
+  const values = sport && sport !== 'All' ? [sport] : [];
+
+  db.all(query, values, (err, rows) => {
     if (err) {
       console.error(err);
-      res.sendFile(__dirname + '/public/error.html');
+      res.render('error.pug', { error: error.message });
     } else {
-      res.render('registrants.pug', { registrants: rows });
+      res.render('registrants.pug', { registrants: rows, sports: [...sports, 'All'] });
     }
   });
 });
 
-let cleanedUp = false;
-
-function cleanup() {
-  if (cleanedUp) return;
-  db.serialize(() => {
-    db.close((err) => {
-      if (err) {
-        console.error(err.message);
-      } else {
-        cleanedUp = true;
-        console.log('Close the database connection.');
-      }
-      process.exit();
-    });
+app.get('/api/registrants', (req, res) => {
+  db.all('SELECT * FROM users', (err, rows) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: err });
+    } else {
+      res.json({ registrants: rows });
+    }
   });
-}
-
-process.on('exit', cleanup);
-process.on('SIGINT', cleanup);
+});
 
 app.listen(3000, () => {
   console.log('Server listening on port 3000');
